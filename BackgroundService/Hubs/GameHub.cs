@@ -3,6 +3,7 @@ using BackgroundService.DTOs;
 using BackgroundService.Models;
 using BackgroundService.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BackgroundService.Hubs
@@ -29,6 +30,8 @@ namespace BackgroundService.Hubs
             await Clients.Caller.SendAsync("GameInfo", new GameInfoDTO()
             {
                 // TODO: Remplir l'information avec les 2 nouveaux features (nbWins et multiplierCost)
+                MultiplierCost = 10,
+                NbWins = player.NbWins
             });
         }
 
@@ -44,5 +47,9 @@ namespace BackgroundService.Hubs
         }
 
         // Ajouter une méthode pour pouvoir acheter un multiplier
+        public async Task BuyMultiplier()
+        {
+            await Clients.Caller.SendAsync("MultiplierInfos", _game.BuyMultiplier(Context.UserIdentifier!));
+        }
     }
 }

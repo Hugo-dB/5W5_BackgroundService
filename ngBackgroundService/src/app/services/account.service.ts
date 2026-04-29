@@ -33,6 +33,7 @@ export class AccountService {
     }
     let result = await lastValueFrom(this.http.post<any>(this.accountBaseUrl + 'Login', registerData));
     sessionStorage.setItem("token", result.token);
+    sessionStorage.setItem("username", this.username);
   }
 
   async logout(){

@@ -15,6 +15,11 @@ interface GameInfo{
   nbWins:number;
 }
 
+interface UserInfo{
+  score:number,
+  multiplier:number
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -26,24 +31,29 @@ export class AppComponent {
   baseUrl = "https://localhost:7056/";
 
   // Ajouter une variable nbWins
+  nbWins : number = 0; 
 
   private hubConnection?: signalR.HubConnection
 
   isConnected = false;
   nbClicks = 0;
   // TODO: Ajouter 3 variables: Le multiplier, le multiplierCost, mais également le multiplierIntialCost pour remettre à jour multiplierCost après chaque fin de round (ou sinon on peut passer l'information dans l'appel qui vient du Hub!)
+  multiplier : number = 1;
+  multiplierCost : number = 0;
+  multiplierInitialCost : number = 10;
 
   constructor(public account:AccountService){
   }
 
   Increment() {
     //TODO: Augmenter le nbClicks par la valeur du multiplicateur
-    this.nbClicks += 1;
+    this.nbClicks += 1 * this.multiplier;
     this.hubConnection!.invoke('Increment')
   }
 
   BuyMultiplier() {
     // TODO: Implémenter la méthode qui permet d'acheter un niveau de multiplier (Appel au Hub!)
+    this.hubConnection!.invoke("BuyMultiplier");
   }
 
   async register(){
@@ -84,16 +94,29 @@ export class AppComponent {
       return;
     }
 
+    this.hubConnection.on("MultiplierInfos", (data:UserInfo) => {
+      this.nbClicks = data.score;
+      this.multiplier = data.multiplier;
+      this.multiplierCost = data.multiplier*this.multiplierInitialCost;
+    }); 
+
     this.hubConnection.on('GameInfo', (data:GameInfo) => {
       this.isConnected = true;
       // TODO: Mettre à jour les variables pour le coût du multiplier et le nbWins
+      this.nbWins = data.nbWins
+      this.multiplierCost = data.multiplierCost;
     });
 
     this.hubConnection.on('EndRound', (data:RoundResult) => {
       this.nbClicks = 0;
       // TODO: Reset du multiplierCost et le multiplier
-
+        this.multiplierCost = this.multiplierInitialCost;
+        this.multiplier = 1;
       // TODO: Si le joueur a gagné, on augmene nbWins
+      if(data.winners.includes(sessionStorage.getItem("username")!!)) {  
+        this.nbWins++;
+      }
+        
 
       if(data.nbClicks > 0){
         let phrase = " a gagné avec ";
